@@ -140,7 +140,7 @@ void SimpleTimer::decrement_seconds()
     return;
   }
 
-  this->set_seconds_unit(DisplayDigit::ZERO);
+  this->set_seconds_unit(DisplayDigit::NINE);
   auto ten_as_int = DisplayDigitHelper::to_uint8(this->seconds_ten);
   will_underflow = ten_as_int == 0;
 
@@ -166,9 +166,9 @@ void SimpleTimer::reset()
 
 void SimpleTimer::maximize()
 {
-  this->set_minutes_ten(DisplayDigit::NINE);
+  this->set_minutes_ten(DisplayDigit::FIVE);
   this->set_minutes_unit(DisplayDigit::NINE);
-  this->set_seconds_ten(DisplayDigit::NINE);
+  this->set_seconds_ten(DisplayDigit::FIVE);
   this->set_seconds_unit(DisplayDigit::NINE);
 }
 

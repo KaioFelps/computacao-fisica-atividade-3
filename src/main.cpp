@@ -78,32 +78,34 @@ void loop()
 void handle_multiplex_timer_display(
     const ArduinoSevenSegmentsDisplayDriver *driver, SimpleTimer *timer)
 {
+  const unsigned int multiplex_delay = 500;
   static unsigned int display_multiplex_timer = millis();
   static uint8_t digit = 1;
 
-  driver->turn_all_off();
-
-  if (millis() - display_multiplex_timer >= 5)
+  if (millis() - display_multiplex_timer >= multiplex_delay)
   {
+    SimpleTimer::TimeFragment time_fragment;
     switch (digit)
     {
     case 1:
-      timer->update_display(SimpleTimer::TimeFragment::MinutesTen);
+      time_fragment = SimpleTimer::TimeFragment::MinutesTen;
       break;
 
     case 2:
-      timer->update_display(SimpleTimer::TimeFragment::MinutesUnit);
+      time_fragment = SimpleTimer::TimeFragment::MinutesUnit;
       break;
 
     case 3:
-      timer->update_display(SimpleTimer::TimeFragment::SecondsTen);
+      time_fragment = SimpleTimer::TimeFragment::SecondsTen;
       break;
 
     case 4:
-      timer->update_display(SimpleTimer::TimeFragment::SecondsUnit);
+      time_fragment = SimpleTimer::TimeFragment::SecondsUnit;
       break;
     }
 
+    driver->turn_leds_off();
+    timer->display_time_fragment(time_fragment);
     digit = digit == 4 ? 1 : digit + 1;
     display_multiplex_timer = millis();
   }

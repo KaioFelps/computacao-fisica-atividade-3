@@ -172,7 +172,7 @@ void SimpleTimer::maximize()
   this->set_seconds_unit(DisplayDigit::NINE);
 }
 
-void SimpleTimer::update_display(TimeFragment fragment)
+void SimpleTimer::display_time_fragment(TimeFragment fragment)
 {
   switch (fragment)
   {

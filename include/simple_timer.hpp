@@ -36,7 +36,7 @@ public:
   core::DisplayDigit get_seconds_unit() const;
   void set_seconds_unit(core::DisplayDigit digit);
 
-  void update_display(TimeFragment fragment);
+  void display_time_fragment(TimeFragment fragment);
 
   void increment_seconds();
   void increment_minutes();

@@ -18,10 +18,24 @@ using tarefa3::timer::SimpleTimer;
 #define OUTPUT_B PB0
 
 // pinos do display
-#define DIG1 A3
-#define DIG2 A4
-#define DIG3 A5
-#define DIG4 A2
+#define DIG1 PC3
+#define DIG2 PC4
+#define DIG3 PC5
+#define DIG4 PC2
+
+// timers pra usar nos debounces
+volatile static auto rotation_timer = millis();
+
+// variáveis utilizadas para manipular os componentes do simulador
+static const auto arduino_pin_manager = ArduinoRotaryEncoderPinManager();
+static const auto arduino_display_driver = ArduinoSevenSegmentsDisplayDriver(
+    &PORTC, &PORTD, PD0, PD1, PD2, PD3, PD4, PD5, PD6);
+
+static auto rotary_encoder =
+    RotaryEncoder(OUTPUT_A, OUTPUT_B, SWITCH, &arduino_pin_manager);
+
+static auto timer_display =
+    SimpleTimer(DIG1, DIG2, DIG3, DIG4, &arduino_display_driver);
 
 void setup()
 {
@@ -31,26 +45,13 @@ void setup()
   DDRB = 0;    // todos os pinos da seção B são entradas (inputs)
   DDRD = 0xFF; // todos os pinos na seção D são saídas (outputs) — para os
                // segmentos do display
-  DDRC = 0x0F; // os 4 primeiros bits da seção C são saídas (outputs) — para os
+  DDRC = 0xFF; // os 4 primeiros bits da seção C são saídas (outputs) — para os
                // dígitos do display
   DDRB &= ~(1 << SWITCH); // torna o pino que recebe o SWITCH do rotary encoder
                           // em uma entrada
   PORTB |= (1 << SWITCH); // habilita o resistor de pull-up interno da entrada
                           // do switch
 }
-
-// timers pra usar nos debounces
-volatile static auto rotation_timer = millis();
-
-// inicialização das variáveis globais necessárias para manipular os
-// componentes no simulador
-static const auto arduino_pin_manager = ArduinoRotaryEncoderPinManager();
-static const auto arduino_display_driver = ArduinoSevenSegmentsDisplayDriver(
-    &PORTC, &PORTD, PD0, PB1, PB2, PB3, PB4, PB5, PB6);
-static auto rotary_encoder =
-    RotaryEncoder(OUTPUT_A, OUTPUT_B, SWITCH, &arduino_pin_manager);
-static auto timer_display =
-    SimpleTimer(DIG1, DIG2, DIG3, DIG4, &arduino_display_driver);
 
 void handle_multiplex_timer_display(
     const ArduinoSevenSegmentsDisplayDriver *driver, SimpleTimer *timer);

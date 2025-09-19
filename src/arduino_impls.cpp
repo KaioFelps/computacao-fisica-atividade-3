@@ -26,7 +26,7 @@ ArduinoSevenSegmentsDisplayDriver::ArduinoSevenSegmentsDisplayDriver(
 void ArduinoSevenSegmentsDisplayDriver::set_digit(
     uint8_t pin, core::DisplayDigit digit) const
 {
-  using tarefa3::core::DisplayDigit;
+  using core::DisplayDigit;
 
   // forma o digito nos segmentos de um dígito de 7 segmentos
   // mapa dos segmentos:
@@ -88,14 +88,14 @@ void ArduinoSevenSegmentsDisplayDriver::set_digit(
   }
 
   this->set_segments_board_state(new_state);
-  this->set_digits_board_state(~(1 << pin));
+  this->set_digits_board_state(1 << pin);
 }
 
 void ArduinoSevenSegmentsDisplayDriver::turn_leds_off() const
 {
   // desliga os 4 dígitos e todos os segmentos
-  this->set_digits_board_state(0x0F);
-  this->set_segments_board_state(1);
+  this->set_segments_board_state(0xFF);
+  this->set_digits_board_state(0x00);
 }
 
 void ArduinoSevenSegmentsDisplayDriver::set_segments_board_state(

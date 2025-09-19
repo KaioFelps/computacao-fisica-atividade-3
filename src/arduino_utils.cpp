@@ -1,19 +1,18 @@
-
-#include "Arduino.h"
 #include "arduino_utils.hpp"
+#include "Arduino.h"
 
-namespace tarefa2::arduino
+namespace tarefa3::arduino
 {
-  bool is_debounced(volatile unsigned long *debounce)
+bool is_debounced(volatile unsigned long *debounce)
+{
+  const size_t delay_resistance = 125;
+
+  if ((millis() - *debounce) <= delay_resistance)
   {
-    const size_t delay_resistance = 125;
-
-    if ((millis() - *debounce) <= delay_resistance)
-    {
-      return false;
-    }
-
-    *debounce = millis();
-    return true;
+    return false;
   }
+
+  *debounce = millis();
+  return true;
 }
+} // namespace tarefa3::arduino

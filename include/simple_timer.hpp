@@ -60,8 +60,6 @@ private:
   core::DisplayDigit seconds_ten = core::DisplayDigit::ZERO;
   core::DisplayDigit seconds_unit = core::DisplayDigit::ZERO;
 
-  void set_time_fragment(TimeFragment fragment, core::DisplayDigit digit);
-
   SimpleTimer() = default;
 };
 } // namespace tarefa3::timer

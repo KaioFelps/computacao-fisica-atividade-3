@@ -18,31 +18,6 @@ SimpleTimer::SimpleTimer(const uint8_t minutes_ten_digit_pin_,
 {
 }
 
-void SimpleTimer::set_time_fragment(TimeFragment fragment, DisplayDigit digit)
-{
-  switch (fragment)
-  {
-  case (TimeFragment::MinutesTen):
-    this->driver->set_digit(this->minutes_ten_digit_pin, digit);
-    break;
-
-  case (TimeFragment::MinutesUnit):
-    this->minutes_unit = digit;
-    this->driver->set_digit(this->minutes_unit_digit_pin, digit);
-    break;
-
-  case (TimeFragment::SecondsTen):
-    this->seconds_ten = digit;
-    this->driver->set_digit(this->seconds_ten_digit_pin, digit);
-    break;
-
-  case (TimeFragment::SecondsUnit):
-    this->seconds_unit = digit;
-    this->driver->set_digit(this->seconds_unit_digit_pin, digit);
-    break;
-  }
-}
-
 DisplayDigit SimpleTimer::get_minutes_ten() const { return this->minutes_ten; }
 
 DisplayDigit SimpleTimer::get_minutes_unit() const

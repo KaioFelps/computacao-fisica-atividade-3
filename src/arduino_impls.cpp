@@ -91,7 +91,7 @@ void ArduinoSevenSegmentsDisplayDriver::set_digit(
   this->set_digits_board_state(~(1 << pin));
 }
 
-void ArduinoSevenSegmentsDisplayDriver::turn_all_off() const
+void ArduinoSevenSegmentsDisplayDriver::turn_leds_off() const
 {
   // desliga os 4 dígitos e todos os segmentos
   this->set_digits_board_state(0x0F);

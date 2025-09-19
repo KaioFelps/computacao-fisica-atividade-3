@@ -39,6 +39,6 @@ public:
       uint8_t segment_g_pin);
 
   void set_digit(uint8_t pin, core::DisplayDigit digit) const final;
-  void turn_all_off() const;
+  void turn_leds_off() const;
 };
 } // namespace tarefa3::arduino

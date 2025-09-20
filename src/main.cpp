@@ -39,6 +39,7 @@ static auto timer_display =
 
 void setup()
 {
+  Serial.end();
   // reforçando:
   // 1 = output
   // 0 = input
@@ -84,6 +85,8 @@ void handle_multiplex_timer_display(
 
   if (millis() - display_multiplex_timer >= multiplex_delay)
   {
+    // obtém qual a unidade que vai ser acesa (dezena ou unidade de segundos ou
+    // minutos)
     SimpleTimer::TimeFragment time_fragment;
     switch (digit)
     {
@@ -106,6 +109,8 @@ void handle_multiplex_timer_display(
 
     driver->turn_leds_off();
     timer->display_time_fragment(time_fragment);
+
+    // essa parte controla qual digito vai ser acendido a cada 5ms
     digit = digit == 4 ? 1 : digit + 1;
     display_multiplex_timer = millis();
   }

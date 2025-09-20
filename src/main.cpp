@@ -29,7 +29,21 @@ volatile static auto rotation_timer = millis();
 // variáveis utilizadas para manipular os componentes do simulador
 static const auto arduino_pin_manager = ArduinoRotaryEncoderPinManager();
 static const auto arduino_display_driver = ArduinoSevenSegmentsDisplayDriver(
-    &PORTC, &PORTD, PD0, PD1, PD2, PD3, PD4, PD5, PD6);
+    ArduinoSevenSegmentsDisplayDriver::Pins{
+        .segment_a = PD0,
+        .segment_b = PD1,
+        .segment_c = PD2,
+        .segment_d = PD3,
+        .segment_e = PD4,
+        .segment_f = PD5,
+        .segment_g = PD6,
+        .colon = COLON,
+    },
+    ArduinoSevenSegmentsDisplayDriver::Boards{
+        .digits = &PORTC,
+        .segments = &PORTD,
+        .colon = &PORTB,
+    });
 
 static auto rotary_encoder =
     RotaryEncoder(OUTPUT_A, OUTPUT_B, SWITCH, &arduino_pin_manager);

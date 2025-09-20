@@ -15,30 +15,38 @@ public:
 
 class ArduinoSevenSegmentsDisplayDriver : public display::DisplayDriver
 {
-private:
-  ArduinoSevenSegmentsDisplayDriver() = default;
-
-  volatile uint8_t *segments_board;
-  volatile uint8_t *digits_board;
-  uint8_t segment_a_pin;
-  uint8_t segment_b_pin;
-  uint8_t segment_c_pin;
-  uint8_t segment_d_pin;
-  uint8_t segment_e_pin;
-  uint8_t segment_f_pin;
-  uint8_t segment_g_pin;
-
-  void set_segments_board_state(uint8_t state) const;
-  void set_digits_board_state(uint8_t state) const;
-
 public:
-  ArduinoSevenSegmentsDisplayDriver(
-      volatile uint8_t *digits_board, volatile uint8_t *segments_board,
-      uint8_t segment_a_pin, uint8_t segment_b_pin, uint8_t segment_c_pin,
-      uint8_t segment_d_pin, uint8_t segment_e_pin, uint8_t segment_f_pin,
-      uint8_t segment_g_pin);
+  typedef struct
+  {
+    uint8_t segment_a;
+    uint8_t segment_b;
+    uint8_t segment_c;
+    uint8_t segment_d;
+    uint8_t segment_e;
+    uint8_t segment_f;
+    uint8_t segment_g;
+    uint8_t colon;
+  } Pins;
+
+  typedef struct
+  {
+    volatile uint8_t *digits;
+    volatile uint8_t *segments;
+    volatile uint8_t *colon;
+  } Boards;
+
+  ArduinoSevenSegmentsDisplayDriver(Pins pins, Boards boards);
 
   void set_digit(uint8_t pin, core::DisplayDigit digit) const final;
   void turn_leds_off() const;
+
+private:
+  ArduinoSevenSegmentsDisplayDriver() = default;
+
+  Boards boards;
+  Pins pins;
+
+  void set_segments_board_state(uint8_t state) const;
+  void set_digits_board_state(uint8_t state) const;
 };
 } // namespace tarefa3::arduino

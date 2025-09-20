@@ -80,10 +80,10 @@ void handle_multiplex_timer_display(
     const ArduinoSevenSegmentsDisplayDriver *driver, SimpleTimer *timer)
 {
   const unsigned int multiplex_delay = 5;
-  static unsigned int display_multiplex_timer = millis();
+  static volatile auto display_multiplex_timer = millis();
   static uint8_t digit = 1;
 
-  if (millis() - display_multiplex_timer >= multiplex_delay)
+  if (is_debounced(&display_multiplex_timer, multiplex_delay))
   {
     // obtém qual a unidade que vai ser acesa (dezena ou unidade de segundos ou
     // minutos)

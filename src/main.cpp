@@ -24,6 +24,11 @@ using tarefa3::timer::SimpleTimer;
 #define DIG4 PC2
 #define COLON PB3
 
+// pino do buzzer
+#define BUZZER 12
+
+#pragma region GlobalVariables variáveis globais que duram o programa inteiro
+
 // variáveis utilizadas para manipular os componentes do simulador
 static const auto arduino_pin_manager = ArduinoRotaryEncoderPinManager();
 static const auto arduino_display_driver = ArduinoSevenSegmentsDisplayDriver(
@@ -52,6 +57,41 @@ static auto rotary_encoder =
 
 static auto stopwatch = SimpleTimer(&arduino_display_driver);
 
+#pragma endregion GlobalVariables
+
+#pragma region LocalFunctions funções locais utilizadas dentro do `loop`
+
+/// @brief Liga cada led do display de sete segmentos para exibir o dígito de
+/// acordo com o timer. Liga cada led individualmente a cada 5ms para realizar
+/// um multiplexing, conforme requisitado pela atividade.
+/// @param stopwatch
+/// @param driver
+void handle_multiplex_timer_display(
+    SimpleTimer *stopwatch, const ArduinoSevenSegmentsDisplayDriver *driver);
+
+/// @brief Mantém o cronômetro decrementando e satisfaz os requisitos
+/// da atividade (piscar os dois pontos)
+/// @param stopwatch
+/// @param display_driver
+void handle_stopwatch_counter(
+    SimpleTimer *stopwatch,
+    const ArduinoSevenSegmentsDisplayDriver *display_driver);
+
+/// @brief Se o buzzer estiver tocando, para ele se ele já tiver tocado por
+/// 300ms.
+/// @param tone_is_playing
+/// @param timer
+void maybe_stop_buzzer(volatile bool *tone_is_playing,
+                       volatile unsigned long *timer);
+
+/// @brief Faz o buzzer começar a tocar uma nota.
+/// @param tone_is_playing
+/// @param timer
+void start_buzzer(volatile bool *tone_is_playing,
+                  volatile unsigned long *timer);
+
+#pragma endregion LocalFunctions
+
 void setup()
 {
   Serial.end();
@@ -67,21 +107,18 @@ void setup()
   DDRB &= ~(1 << SWITCH); // torna o pino que recebe o SWITCH do rotary encoder
                           // em uma entrada
   PORTB |= (1 << SWITCH); // habilita o resistor de pull-up interno da entrada
-  // do switch
+                          // do switch
 }
-
-void handle_multiplex_timer_display(
-    SimpleTimer *stopwatch, const ArduinoSevenSegmentsDisplayDriver *driver);
-
-void handle_stopwatch_counter(
-    SimpleTimer *stopwatch,
-    const ArduinoSevenSegmentsDisplayDriver *display_driver);
 
 void loop()
 {
   static volatile auto rotation_timer = millis();
   static volatile auto switch_timer = millis();
+  static volatile auto tone_timer = millis();
+
   static volatile auto stopwatch_is_running = false;
+  static volatile auto tone_is_playing = false;
+
   const auto rotary_encoder_report = rotary_encoder.get_report();
 
   if (rotary_encoder_report.has_rotated && is_debounced(&rotation_timer))
@@ -108,9 +145,42 @@ void loop()
   if (stopwatch_is_running)
   {
     handle_stopwatch_counter(&stopwatch, &arduino_display_driver);
+
+    if (stopwatch.is_zeroed())
+    {
+      // inicia o buzzer
+      stopwatch_is_running = false;
+      start_buzzer(&tone_is_playing, &tone_timer);
+    }
+  }
+
+  maybe_stop_buzzer(&tone_is_playing, &tone_timer);
+  if (tone_is_playing && is_debounced(&tone_timer, 300))
+  {
+    noTone(BUZZER);
+    tone_is_playing = false;
   }
 
   handle_multiplex_timer_display(&stopwatch, &arduino_display_driver);
+}
+
+#pragma region LocalFunctionsImpls implementações das funções locais
+
+void start_buzzer(volatile bool *tone_is_playing, volatile unsigned long *timer)
+{
+  tone(BUZZER, 300);
+  *timer = millis();
+  *tone_is_playing = true;
+}
+
+void maybe_stop_buzzer(volatile bool *tone_is_playing,
+                       volatile unsigned long *timer)
+{
+  if (*tone_is_playing && is_debounced(timer, 300))
+  {
+    noTone(BUZZER);
+    *tone_is_playing = false;
+  }
 }
 
 void handle_stopwatch_counter(
@@ -174,3 +244,5 @@ void handle_multiplex_timer_display(
     display_multiplex_timer = millis();
   }
 }
+
+#pragma endregion LocalFunctionsImpls

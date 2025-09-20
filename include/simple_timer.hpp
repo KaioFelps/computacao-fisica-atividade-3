@@ -43,6 +43,8 @@ public:
   void reset();
   void maximize();
 
+  bool is_zeroed() const;
+
 private:
   const display::DisplayDriver *driver;
 

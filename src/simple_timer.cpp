@@ -188,4 +188,12 @@ void SimpleTimer::display_time_fragment(TimeFragment fragment)
   }
 }
 
+bool SimpleTimer::is_zeroed() const
+{
+  return (this->minutes_ten == DisplayDigit::ZERO &&
+          this->minutes_unit == DisplayDigit::ZERO &&
+          this->seconds_ten == DisplayDigit::ZERO &&
+          this->seconds_unit == DisplayDigit::ZERO);
+}
+
 } // namespace tarefa3::timer

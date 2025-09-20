@@ -19,8 +19,10 @@ public:
 
   virtual void set_digit(DigitLed pin,
                          tarefa3::core::DisplayDigit digit) const = 0;
+
   virtual void turn_colon_on() const = 0;
   virtual void turn_colon_off() const = 0;
+  virtual void toggle_colon() const = 0;
 };
 
 } // namespace tarefa3::display

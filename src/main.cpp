@@ -50,7 +50,7 @@ static const auto arduino_display_driver = ArduinoSevenSegmentsDisplayDriver(
 static auto rotary_encoder =
     RotaryEncoder(OUTPUT_A, OUTPUT_B, SWITCH, &arduino_pin_manager);
 
-static auto timer_display = SimpleTimer(&arduino_display_driver);
+static auto stopwatch = SimpleTimer(&arduino_display_driver);
 
 void setup()
 {
@@ -71,30 +71,72 @@ void setup()
 }
 
 void handle_multiplex_timer_display(
-    const ArduinoSevenSegmentsDisplayDriver *driver, SimpleTimer *timer);
+    SimpleTimer *stopwatch, const ArduinoSevenSegmentsDisplayDriver *driver);
+
+void handle_stopwatch_counter(
+    SimpleTimer *stopwatch,
+    const ArduinoSevenSegmentsDisplayDriver *display_driver);
 
 void loop()
 {
   static volatile auto rotation_timer = millis();
+  static volatile auto switch_timer = millis();
+  static volatile auto stopwatch_is_running = false;
   const auto rotary_encoder_report = rotary_encoder.get_report();
 
   if (rotary_encoder_report.has_rotated && is_debounced(&rotation_timer))
   {
     if (rotary_encoder_report.has_rotated_clockwise)
     {
-      timer_display.increment_seconds();
+      stopwatch.increment_seconds();
     }
     else
     {
-      timer_display.decrement_seconds();
+      stopwatch.decrement_seconds();
     }
   }
 
-  handle_multiplex_timer_display(&arduino_display_driver, &timer_display);
+  if (rotary_encoder_report.switch_state_has_changed &&
+      is_debounced(&switch_timer))
+  {
+    if (rotary_encoder_report.switch_has_been_pressed)
+    {
+      stopwatch_is_running = !stopwatch_is_running;
+    }
+  }
+
+  if (stopwatch_is_running)
+  {
+    handle_stopwatch_counter(&stopwatch, &arduino_display_driver);
+  }
+
+  handle_multiplex_timer_display(&stopwatch, &arduino_display_driver);
+}
+
+void handle_stopwatch_counter(
+    SimpleTimer *stopwatch,
+    const ArduinoSevenSegmentsDisplayDriver *display_driver)
+{
+  static volatile auto seconds_timer = millis();
+  static volatile auto colon_timer = millis();
+
+  const auto one_second_as_ms = 1000;
+  const auto half_a_second_as_ms = one_second_as_ms / 2;
+
+  if (is_debounced(&colon_timer, half_a_second_as_ms))
+  {
+    display_driver->toggle_colon();
+  }
+
+  if (is_debounced(&seconds_timer, one_second_as_ms))
+  {
+    stopwatch->decrement_seconds();
+    seconds_timer = millis();
+  }
 }
 
 void handle_multiplex_timer_display(
-    const ArduinoSevenSegmentsDisplayDriver *driver, SimpleTimer *timer)
+    SimpleTimer *stopwatch, const ArduinoSevenSegmentsDisplayDriver *driver)
 {
   const unsigned int multiplex_delay = 5;
   static volatile auto display_multiplex_timer = millis();
@@ -125,7 +167,7 @@ void handle_multiplex_timer_display(
     }
 
     driver->turn_leds_off();
-    timer->display_time_fragment(time_fragment);
+    stopwatch->display_time_fragment(time_fragment);
 
     // essa parte controla qual digito vai ser acendido a cada 5ms
     digit = digit == 4 ? 1 : digit + 1;

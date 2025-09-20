@@ -43,8 +43,11 @@ public:
 
   void set_digit(display::DisplayDriver::DigitLed led,
                  core::DisplayDigit digit) const final;
-  virtual void turn_colon_on() const final;
-  virtual void turn_colon_off() const final;
+
+  void turn_colon_on() const final;
+  void turn_colon_off() const final;
+  void toggle_colon() const final;
+
   void turn_leds_off() const;
 
 private:

@@ -134,4 +134,17 @@ void ArduinoSevenSegmentsDisplayDriver::turn_colon_off() const
   *(this->boards.colon) &= ~(1 << this->pins.colon);
 }
 
+void ArduinoSevenSegmentsDisplayDriver::toggle_colon() const
+{
+  const auto colon_is_on = (*this->boards.colon) & (1 << this->pins.colon);
+  if (colon_is_on)
+  {
+    this->turn_colon_off();
+  }
+  else
+  {
+    this->turn_colon_on();
+  }
+}
+
 } // namespace tarefa3::arduino

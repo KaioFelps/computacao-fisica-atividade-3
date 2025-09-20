@@ -1,5 +1,6 @@
 #pragma once
 
+#include "buzzer.hpp"
 #include "display.hpp"
 #include "rotary_encoder.hpp"
 #include <stdint.h>
@@ -11,6 +12,17 @@ class ArduinoRotaryEncoderPinManager
 {
 public:
   bool get_rotary_output_digital_level(uint8_t output_pin) const final;
+};
+
+class ArduinoBuzzerPinManager : public buzzer::BuzzerPinManager
+{
+public:
+  ArduinoBuzzerPinManager(volatile uint8_t *board, uint8_t pin);
+  void set_signal_level(bool signal_level) const final;
+
+private:
+  uint8_t pin;
+  volatile uint8_t *board;
 };
 
 class ArduinoSevenSegmentsDisplayDriver : public display::DisplayDriver

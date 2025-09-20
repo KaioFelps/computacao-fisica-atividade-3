@@ -3,6 +3,9 @@
 
 namespace tarefa3::arduino
 {
+////////////////////////////////////////////////
+// `ArduinoRotaryEncoderPinManager`
+////////////////////////////////////////////////
 bool ArduinoRotaryEncoderPinManager::get_rotary_output_digital_level(
     uint8_t output_pin) const
 {
@@ -10,6 +13,9 @@ bool ArduinoRotaryEncoderPinManager::get_rotary_output_digital_level(
   return output != 0;
 }
 
+////////////////////////////////////////////////
+// `ArduinoSevenSegmentsDisplayDriver`
+////////////////////////////////////////////////
 ArduinoSevenSegmentsDisplayDriver::ArduinoSevenSegmentsDisplayDriver(
     Pins pins_, Boards boards_)
     : pins(pins_), boards(boards_)
@@ -145,6 +151,27 @@ void ArduinoSevenSegmentsDisplayDriver::toggle_colon() const
   {
     this->turn_colon_on();
   }
+}
+
+////////////////////////////////////////////////
+// `ArduinoBuzzerPinManager`
+////////////////////////////////////////////////
+
+ArduinoBuzzerPinManager::ArduinoBuzzerPinManager(volatile uint8_t *board_,
+                                                 uint8_t pin_)
+    : board(board_), pin(pin_)
+{
+}
+
+void ArduinoBuzzerPinManager::set_signal_level(bool signal_level) const
+{
+  if (signal_level)
+  {
+    *(this->board) |= (1 << this->pin);
+    return;
+  }
+
+  *(this->board) &= ~(1 << this->pin);
 }
 
 } // namespace tarefa3::arduino

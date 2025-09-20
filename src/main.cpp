@@ -22,9 +22,7 @@ using tarefa3::timer::SimpleTimer;
 #define DIG2 PC4
 #define DIG3 PC5
 #define DIG4 PC2
-
-// timers pra usar nos debounces
-volatile static auto rotation_timer = millis();
+#define COLON PB3
 
 // variáveis utilizadas para manipular os componentes do simulador
 static const auto arduino_pin_manager = ArduinoRotaryEncoderPinManager();
@@ -37,6 +35,10 @@ static const auto arduino_display_driver = ArduinoSevenSegmentsDisplayDriver(
         .segment_e = PD4,
         .segment_f = PD5,
         .segment_g = PD6,
+        .digit_1 = DIG1,
+        .digit_2 = DIG2,
+        .digit_3 = DIG3,
+        .digit_4 = DIG4,
         .colon = COLON,
     },
     ArduinoSevenSegmentsDisplayDriver::Boards{
@@ -48,8 +50,7 @@ static const auto arduino_display_driver = ArduinoSevenSegmentsDisplayDriver(
 static auto rotary_encoder =
     RotaryEncoder(OUTPUT_A, OUTPUT_B, SWITCH, &arduino_pin_manager);
 
-static auto timer_display =
-    SimpleTimer(DIG1, DIG2, DIG3, DIG4, &arduino_display_driver);
+static auto timer_display = SimpleTimer(&arduino_display_driver);
 
 void setup()
 {
@@ -57,15 +58,16 @@ void setup()
   // reforçando:
   // 1 = output
   // 0 = input
-  DDRB = 0;    // todos os pinos da seção B são entradas (inputs)
-  DDRD = 0xFF; // todos os pinos na seção D são saídas (outputs) — para os
-               // segmentos do display
+  DDRB = 0b00001000; // todos os pinos da seção B são entradas (inputs), exceto
+                     // a saída dos dois pontos
+  DDRD = 0xFF;       // todos os pinos na seção D são saídas (outputs) — para os
+                     // segmentos do display
   DDRC = 0xFF; // os 4 primeiros bits da seção C são saídas (outputs) — para os
                // dígitos do display
   DDRB &= ~(1 << SWITCH); // torna o pino que recebe o SWITCH do rotary encoder
                           // em uma entrada
   PORTB |= (1 << SWITCH); // habilita o resistor de pull-up interno da entrada
-                          // do switch
+  // do switch
 }
 
 void handle_multiplex_timer_display(
@@ -73,6 +75,7 @@ void handle_multiplex_timer_display(
 
 void loop()
 {
+  static volatile auto rotation_timer = millis();
   const auto rotary_encoder_report = rotary_encoder.get_report();
 
   if (rotary_encoder_report.has_rotated && is_debounced(&rotation_timer))

@@ -4,9 +4,9 @@
 namespace tarefa3::arduino
 {
 bool ArduinoRotaryEncoderPinManager::get_rotary_output_digital_level(
-    uint8_t output) const
+    uint8_t output_pin) const
 {
-  const uint8_t output = PINB & (1 << output);
+  const uint8_t output = PINB & (1 << output_pin);
   return output != 0;
 }
 
@@ -17,9 +17,10 @@ ArduinoSevenSegmentsDisplayDriver::ArduinoSevenSegmentsDisplayDriver(
 }
 
 void ArduinoSevenSegmentsDisplayDriver::set_digit(
-    uint8_t pin, core::DisplayDigit digit) const
+    display::DisplayDriver::DigitLed led, core::DisplayDigit digit) const
 {
   using core::DisplayDigit;
+  using display::DisplayDriver;
 
   // forma o digito nos segmentos de um dígito de 7 segmentos
   // mapa dos segmentos:
@@ -80,6 +81,26 @@ void ArduinoSevenSegmentsDisplayDriver::set_digit(
     break;
   }
 
+  uint8_t pin;
+  switch (led)
+  {
+  case DisplayDriver::DigitLed::DIG1:
+    pin = this->pins.digit_1;
+    break;
+
+  case DisplayDriver::DigitLed::DIG2:
+    pin = this->pins.digit_2;
+    break;
+
+  case DisplayDriver::DigitLed::DIG3:
+    pin = this->pins.digit_3;
+    break;
+
+  case DisplayDriver::DigitLed::DIG4:
+    pin = this->pins.digit_4;
+    break;
+  }
+
   this->set_segments_board_state(new_state);
   this->set_digits_board_state(1 << pin);
 }
@@ -102,4 +123,15 @@ void ArduinoSevenSegmentsDisplayDriver::set_digits_board_state(
 {
   *(this->boards.digits) = state;
 }
+
+void ArduinoSevenSegmentsDisplayDriver::turn_colon_on() const
+{
+  *(this->boards.colon) |= (1 << this->pins.colon);
+}
+
+void ArduinoSevenSegmentsDisplayDriver::turn_colon_off() const
+{
+  *(this->boards.colon) &= ~(1 << this->pins.colon);
+}
+
 } // namespace tarefa3::arduino

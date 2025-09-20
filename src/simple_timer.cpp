@@ -6,15 +6,8 @@ using tarefa3::core::DisplayDigitHelper;
 
 namespace tarefa3::timer
 {
-SimpleTimer::SimpleTimer(const uint8_t minutes_ten_digit_pin_,
-                         const uint8_t minutes_unit_digit_pin_,
-                         const uint8_t seconds_ten_digit_pin_,
-                         const uint8_t seconds_unit_digit_pin_,
-                         const display::DisplayDriver *driver_)
-    : minutes_ten_digit_pin(minutes_ten_digit_pin_),
-      minutes_unit_digit_pin(minutes_unit_digit_pin_),
-      seconds_ten_digit_pin(seconds_ten_digit_pin_),
-      seconds_unit_digit_pin(seconds_unit_digit_pin_), driver(driver_)
+SimpleTimer::SimpleTimer(const display::DisplayDriver *driver_)
+    : driver(driver_)
 {
 }
 
@@ -174,22 +167,23 @@ void SimpleTimer::maximize()
 
 void SimpleTimer::display_time_fragment(TimeFragment fragment)
 {
+  using display::DisplayDriver;
   switch (fragment)
   {
   case TimeFragment::MinutesTen:
-    this->driver->set_digit(this->minutes_ten_digit_pin, this->minutes_ten);
+    this->driver->set_digit(DisplayDriver::DIG1, this->minutes_ten);
     break;
 
   case TimeFragment::MinutesUnit:
-    this->driver->set_digit(this->minutes_unit_digit_pin, this->minutes_unit);
+    this->driver->set_digit(DisplayDriver::DIG2, this->minutes_unit);
     break;
 
   case TimeFragment::SecondsTen:
-    this->driver->set_digit(this->seconds_ten_digit_pin, this->seconds_ten);
+    this->driver->set_digit(DisplayDriver::DIG3, this->seconds_ten);
     break;
 
   case TimeFragment::SecondsUnit:
-    this->driver->set_digit(this->seconds_unit_digit_pin, this->seconds_unit);
+    this->driver->set_digit(DisplayDriver::DIG4, this->seconds_unit);
     break;
   }
 }

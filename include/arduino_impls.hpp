@@ -25,6 +25,10 @@ public:
     uint8_t segment_e;
     uint8_t segment_f;
     uint8_t segment_g;
+    uint8_t digit_1;
+    uint8_t digit_2;
+    uint8_t digit_3;
+    uint8_t digit_4;
     uint8_t colon;
   } Pins;
 
@@ -37,7 +41,10 @@ public:
 
   ArduinoSevenSegmentsDisplayDriver(Pins pins, Boards boards);
 
-  void set_digit(uint8_t pin, core::DisplayDigit digit) const final;
+  void set_digit(display::DisplayDriver::DigitLed led,
+                 core::DisplayDigit digit) const final;
+  virtual void turn_colon_on() const final;
+  virtual void turn_colon_off() const final;
   void turn_leds_off() const;
 
 private:

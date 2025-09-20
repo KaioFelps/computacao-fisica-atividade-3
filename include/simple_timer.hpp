@@ -18,11 +18,7 @@ public:
     SecondsUnit
   };
 
-  SimpleTimer(const uint8_t minutes_ten_digit_pin,
-              const uint8_t minutes_unit_digit_pin,
-              const uint8_t seconds_ten_digit_pin,
-              const uint8_t seconds_unit_digit_pin,
-              const display::DisplayDriver *driver);
+  SimpleTimer(const display::DisplayDriver *driver);
 
   core::DisplayDigit get_minutes_ten() const;
   void set_minutes_ten(core::DisplayDigit digit);
@@ -49,11 +45,6 @@ public:
 
 private:
   const display::DisplayDriver *driver;
-
-  const uint8_t minutes_ten_digit_pin;
-  const uint8_t minutes_unit_digit_pin;
-  const uint8_t seconds_ten_digit_pin;
-  const uint8_t seconds_unit_digit_pin;
 
   core::DisplayDigit minutes_ten = core::DisplayDigit::ZERO;
   core::DisplayDigit minutes_unit = core::DisplayDigit::ZERO;

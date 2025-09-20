@@ -79,7 +79,7 @@ void loop()
 void handle_multiplex_timer_display(
     const ArduinoSevenSegmentsDisplayDriver *driver, SimpleTimer *timer)
 {
-  const unsigned int multiplex_delay = 500;
+  const unsigned int multiplex_delay = 5;
   static unsigned int display_multiplex_timer = millis();
   static uint8_t digit = 1;
 

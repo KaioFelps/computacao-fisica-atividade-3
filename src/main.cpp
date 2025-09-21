@@ -75,15 +75,16 @@ void setup()
 }
 
 void handle_rotary_encoder_rotation(
-    bool has_rotated_clockwise,
-    StopwatchSettingsSwitch stopwatch_settings_state);
+    const bool has_rotated_clockwise,
+    const StopwatchSettingsSwitch stopwatch_settings_state,
+    const unsigned long rotation_execution_timer);
 
 void handle_rotary_encoder_switch_press(
-    bool switch_has_been_pressed, bool *stopwatch_is_running,
+    const bool switch_has_been_pressed, bool *stopwatch_is_running,
     StopwatchSettingsSwitch *stopwatch_settings_state);
 
 void manage_arduino_timer_leds_display(
-    StopwatchSettingsSwitch stopwatch_settings_state);
+    const StopwatchSettingsSwitch stopwatch_settings_state);
 
 void loop()
 {
@@ -95,18 +96,26 @@ void loop()
   static auto tone_is_playing = false;
   static auto stopwatch_settings_state = StopwatchSettingsSwitch::NONE;
 
-  /// Se 0, significa que a rotação foi interrompida. É definida quando uma
-  /// rotação se inicia para verificar o tempo em que está sendo rotacionado sem
-  /// interrupções, informação que decide se o timer deve
-  /// incrementar/decrementar mais rapidamente
-  auto rotation_execution_timer = 0;
+  const uint16_t rotation_stop_assumption_delay = 400;
+  static auto rotation_begin_time = 0ul;
+  static auto rotation_session_begin_time = 0ul;
 
   const auto rotary_encoder_report = rotary_encoder.get_report();
 
   if (rotary_encoder_report.has_rotated && is_debounced(&rotation_timer))
   {
+    if (rotation_begin_time == 0) rotation_begin_time = millis();
+
     handle_rotary_encoder_rotation(rotary_encoder_report.has_rotated_clockwise,
-                                   stopwatch_settings_state);
+                                   stopwatch_settings_state,
+                                   rotation_begin_time);
+
+    rotation_session_begin_time = millis();
+  }
+  else if ((millis() - rotation_session_begin_time) >=
+           rotation_stop_assumption_delay)
+  {
+    rotation_begin_time = 0;
   }
 
   if (rotary_encoder_report.switch_state_has_changed &&
@@ -133,22 +142,33 @@ void loop()
 }
 
 void handle_rotary_encoder_rotation(
-    bool has_rotated_clockwise,
-    StopwatchSettingsSwitch stopwatch_settings_state)
+    const bool has_rotated_clockwise,
+    const StopwatchSettingsSwitch stopwatch_settings_state,
+    const unsigned long rotation_execution_timer)
 {
+  static const auto press_time_for_incrementing_faster = 1000;
+  const auto session_elapsed = rotation_execution_timer == 0
+                                   ? 0UL
+                                   : (millis() - rotation_execution_timer);
+  const auto should_increment_faster =
+      session_elapsed >= press_time_for_incrementing_faster;
+
+  const auto custom_delta_options = SimpleTimer::DeltaOptions(
+      stopwatch_settings_state == StopwatchSettingsSwitch::NONE,
+      should_increment_faster);
 
   if (has_rotated_clockwise)
   {
     switch (stopwatch_settings_state)
     {
     case StopwatchSettingsSwitch::NONE:
-      stopwatch.increment_seconds();
+      stopwatch.increment_seconds(custom_delta_options);
       break;
     case StopwatchSettingsSwitch::MINUTES:
-      stopwatch.increment_minutes(false);
+      stopwatch.increment_minutes(custom_delta_options);
       break;
     case StopwatchSettingsSwitch::SECONDS:
-      stopwatch.increment_seconds(false);
+      stopwatch.increment_seconds(custom_delta_options);
       break;
     }
   }
@@ -157,19 +177,20 @@ void handle_rotary_encoder_rotation(
     switch (stopwatch_settings_state)
     {
     case StopwatchSettingsSwitch::NONE:
-      stopwatch.decrement_seconds();
+      stopwatch.decrement_seconds(custom_delta_options);
       break;
     case StopwatchSettingsSwitch::MINUTES:
-      stopwatch.decrement_minutes(false);
+      stopwatch.decrement_minutes(custom_delta_options);
       break;
     case StopwatchSettingsSwitch::SECONDS:
-      stopwatch.decrement_seconds(false);
+      stopwatch.decrement_seconds(custom_delta_options);
+      break;
     }
   }
 }
 
 void handle_rotary_encoder_switch_press(
-    bool switch_has_been_pressed, bool *stopwatch_is_running,
+    const bool switch_has_been_pressed, bool *stopwatch_is_running,
     StopwatchSettingsSwitch *stopwatch_settings_state)
 {
   static unsigned long rotary_encoder_switch_press_timer = millis();
@@ -223,7 +244,7 @@ void handle_rotary_encoder_switch_press(
 }
 
 void manage_arduino_timer_leds_display(
-    StopwatchSettingsSwitch stopwatch_settings_state)
+    const StopwatchSettingsSwitch stopwatch_settings_state)
 {
   // todos os tempos se dão em milisegundos
   const auto blink_duration = 200;

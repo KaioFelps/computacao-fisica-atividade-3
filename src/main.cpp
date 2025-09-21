@@ -79,21 +79,27 @@ void handle_rotary_encoder_rotation(
     StopwatchSettingsSwitch stopwatch_settings_state);
 
 void handle_rotary_encoder_switch_press(
-    bool switch_has_been_pressed, volatile bool *stopwatch_is_running,
-    volatile StopwatchSettingsSwitch *stopwatch_settings_state);
+    bool switch_has_been_pressed, bool *stopwatch_is_running,
+    StopwatchSettingsSwitch *stopwatch_settings_state);
 
 void manage_arduino_timer_leds_display(
     StopwatchSettingsSwitch stopwatch_settings_state);
 
 void loop()
 {
-  static volatile auto rotation_timer = millis();
-  static volatile auto switch_timer = millis();
-  static volatile auto tone_timer = millis();
+  static auto rotation_timer = millis();
+  static auto switch_timer = millis();
+  static auto tone_timer = millis();
 
-  static volatile auto stopwatch_is_running = false;
-  static volatile auto tone_is_playing = false;
-  static volatile auto stopwatch_settings_state = StopwatchSettingsSwitch::NONE;
+  static auto stopwatch_is_running = false;
+  static auto tone_is_playing = false;
+  static auto stopwatch_settings_state = StopwatchSettingsSwitch::NONE;
+
+  /// Se 0, significa que a rotação foi interrompida. É definida quando uma
+  /// rotação se inicia para verificar o tempo em que está sendo rotacionado sem
+  /// interrupções, informação que decide se o timer deve
+  /// incrementar/decrementar mais rapidamente
+  auto rotation_execution_timer = 0;
 
   const auto rotary_encoder_report = rotary_encoder.get_report();
 
@@ -163,10 +169,10 @@ void handle_rotary_encoder_rotation(
 }
 
 void handle_rotary_encoder_switch_press(
-    bool switch_has_been_pressed, volatile bool *stopwatch_is_running,
-    volatile StopwatchSettingsSwitch *stopwatch_settings_state)
+    bool switch_has_been_pressed, bool *stopwatch_is_running,
+    StopwatchSettingsSwitch *stopwatch_settings_state)
 {
-  static volatile unsigned long rotary_encoder_switch_press_timer = millis();
+  static unsigned long rotary_encoder_switch_press_timer = millis();
   const auto press_time_for_enable_stopwatch_settings = 500;
 
   // quando pressionar o switch, inicia-se um contador para decidir qual

@@ -52,11 +52,11 @@ void partially_blink_half_digits(
 /// @param tone_is_playing
 /// @param timer
 void maybe_stop_buzzer(const uint8_t buzzer_pin, volatile bool *tone_is_playing,
-                       volatile unsigned long *timer);
+                       unsigned long *timer);
 
 /// @brief Faz o buzzer começar a tocar uma nota.
 /// @param tone_is_playing
 /// @param timer
 void start_buzzer(const uint8_t buzzer_pin, volatile bool *tone_is_playing,
-                  volatile unsigned long *timer);
+                  unsigned long *timer);
 } // namespace tarefa3

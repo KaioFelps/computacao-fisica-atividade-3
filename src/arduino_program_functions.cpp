@@ -10,7 +10,7 @@ using tarefa3::arduino::is_debounced;
 using tarefa3::timer::SimpleTimer;
 
 void start_buzzer(const uint8_t buzzer_pin, volatile bool *tone_is_playing,
-                  volatile unsigned long *timer)
+                  unsigned long *timer)
 {
   tone(buzzer_pin, 300);
   *timer = millis();
@@ -18,7 +18,7 @@ void start_buzzer(const uint8_t buzzer_pin, volatile bool *tone_is_playing,
 }
 
 void maybe_stop_buzzer(const uint8_t buzzer_pin, volatile bool *tone_is_playing,
-                       volatile unsigned long *timer)
+                       unsigned long *timer)
 {
   if (*tone_is_playing && is_debounced(timer, 300))
   {
@@ -31,8 +31,8 @@ void handle_stopwatch_counter(
     SimpleTimer *stopwatch,
     const ArduinoSevenSegmentsDisplayDriver *display_driver)
 {
-  static volatile auto seconds_timer = millis();
-  static volatile auto colon_timer = millis();
+  static auto seconds_timer = millis();
+  static auto colon_timer = millis();
 
   const auto one_second_as_ms = 1000;
   const auto half_a_second_as_ms = one_second_as_ms / 2;
@@ -53,7 +53,7 @@ void display_every_digit(SimpleTimer *stopwatch,
                          const ArduinoSevenSegmentsDisplayDriver *driver,
                          const uint16_t multiplex_delay)
 {
-  static volatile auto display_multiplex_timer = millis();
+  static auto display_multiplex_timer = millis();
   static uint8_t digit = 1;
 
   if (is_debounced(&display_multiplex_timer, multiplex_delay))
@@ -95,8 +95,8 @@ void partially_blink_half_digits(
     uint8_t multiplex_delay_for_each_digit,
     SimpleTimer::TimeFragment fragment_1, SimpleTimer::TimeFragment fragment_2)
 {
-  static volatile auto target_half_timer = millis();
-  static volatile auto left_half_timer = millis();
+  static auto target_half_timer = millis();
+  static auto left_half_timer = millis();
 
   static auto target_half_digits_should_be_off = false;
 

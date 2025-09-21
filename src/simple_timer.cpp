@@ -112,6 +112,7 @@ void SimpleTimer::decrement_minutes(bool should_bubble)
     return;
   }
 
+  this->set_minutes_unit(DisplayDigit::NINE);
   auto minutes_ten_as_int = DisplayDigitHelper::to_uint8(this->minutes_ten);
   will_underflow = minutes_ten_as_int == 0;
   if (!will_underflow)

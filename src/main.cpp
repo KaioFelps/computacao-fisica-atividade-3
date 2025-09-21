@@ -1,14 +1,15 @@
 #include "arduino_impls.hpp"
+#include "arduino_program_functions.hpp"
 #include "arduino_utils.hpp"
 #include "display.hpp"
 #include "rotary_encoder.hpp"
 #include "simple_timer.hpp"
 #include <Arduino.h>
 
+using tarefa3::StopwatchSettingsSwitch;
 using tarefa3::arduino::ArduinoRotaryEncoderPinManager;
 using tarefa3::arduino::ArduinoSevenSegmentsDisplayDriver;
 using tarefa3::arduino::is_debounced;
-using tarefa3::core::DisplayDigit;
 using tarefa3::rotary_encoder::RotaryEncoder;
 using tarefa3::timer::SimpleTimer;
 
@@ -26,8 +27,6 @@ using tarefa3::timer::SimpleTimer;
 
 // pino do buzzer
 #define BUZZER 12
-
-#pragma region GlobalVariables variáveis globais que duram o programa inteiro
 
 // variáveis utilizadas para manipular os componentes do simulador
 static const auto arduino_pin_manager = ArduinoRotaryEncoderPinManager();
@@ -57,41 +56,6 @@ static auto rotary_encoder =
 
 static auto stopwatch = SimpleTimer(&arduino_display_driver);
 
-#pragma endregion GlobalVariables
-
-#pragma region LocalFunctions funções locais utilizadas dentro do `loop`
-
-/// @brief Liga cada led do display de sete segmentos para exibir o dígito de
-/// acordo com o timer. Liga cada led individualmente a cada 5ms para realizar
-/// um multiplexing, conforme requisitado pela atividade.
-/// @param stopwatch
-/// @param driver
-void handle_multiplex_timer_display(
-    SimpleTimer *stopwatch, const ArduinoSevenSegmentsDisplayDriver *driver);
-
-/// @brief Mantém o cronômetro decrementando e satisfaz os requisitos
-/// da atividade (piscar os dois pontos)
-/// @param stopwatch
-/// @param display_driver
-void handle_stopwatch_counter(
-    SimpleTimer *stopwatch,
-    const ArduinoSevenSegmentsDisplayDriver *display_driver);
-
-/// @brief Se o buzzer estiver tocando, para ele se ele já tiver tocado por
-/// 300ms.
-/// @param tone_is_playing
-/// @param timer
-void maybe_stop_buzzer(volatile bool *tone_is_playing,
-                       volatile unsigned long *timer);
-
-/// @brief Faz o buzzer começar a tocar uma nota.
-/// @param tone_is_playing
-/// @param timer
-void start_buzzer(volatile bool *tone_is_playing,
-                  volatile unsigned long *timer);
-
-#pragma endregion LocalFunctions
-
 void setup()
 {
   Serial.end();
@@ -110,6 +74,17 @@ void setup()
                           // do switch
 }
 
+void handle_rotary_encoder_rotation(
+    bool has_rotated_clockwise,
+    StopwatchSettingsSwitch stopwatch_settings_state);
+
+void handle_rotary_encoder_switch_press(
+    bool switch_has_been_pressed, volatile bool *stopwatch_is_running,
+    volatile StopwatchSettingsSwitch *stopwatch_settings_state);
+
+void manage_arduino_timer_leds_display(
+    StopwatchSettingsSwitch stopwatch_settings_state);
+
 void loop()
 {
   static volatile auto rotation_timer = millis();
@@ -118,131 +93,157 @@ void loop()
 
   static volatile auto stopwatch_is_running = false;
   static volatile auto tone_is_playing = false;
+  static volatile auto stopwatch_settings_state = StopwatchSettingsSwitch::NONE;
 
   const auto rotary_encoder_report = rotary_encoder.get_report();
 
   if (rotary_encoder_report.has_rotated && is_debounced(&rotation_timer))
   {
-    if (rotary_encoder_report.has_rotated_clockwise)
-    {
-      stopwatch.increment_seconds();
-    }
-    else
-    {
-      stopwatch.decrement_seconds();
-    }
+    handle_rotary_encoder_rotation(rotary_encoder_report.has_rotated_clockwise,
+                                   stopwatch_settings_state);
   }
 
   if (rotary_encoder_report.switch_state_has_changed &&
       is_debounced(&switch_timer))
   {
-    if (rotary_encoder_report.switch_has_been_pressed)
-    {
-      stopwatch_is_running = !stopwatch_is_running;
-    }
+    handle_rotary_encoder_switch_press(
+        rotary_encoder_report.switch_has_been_pressed, &stopwatch_is_running,
+        &stopwatch_settings_state);
   }
 
   if (stopwatch_is_running)
   {
-    handle_stopwatch_counter(&stopwatch, &arduino_display_driver);
+    tarefa3::handle_stopwatch_counter(&stopwatch, &arduino_display_driver);
 
     if (stopwatch.is_zeroed())
     {
-      // inicia o buzzer
       stopwatch_is_running = false;
-      start_buzzer(&tone_is_playing, &tone_timer);
+      tarefa3::start_buzzer(BUZZER, &tone_is_playing, &tone_timer);
     }
   }
 
-  maybe_stop_buzzer(&tone_is_playing, &tone_timer);
-  if (tone_is_playing && is_debounced(&tone_timer, 300))
-  {
-    noTone(BUZZER);
-    tone_is_playing = false;
-  }
-
-  handle_multiplex_timer_display(&stopwatch, &arduino_display_driver);
+  tarefa3::maybe_stop_buzzer(BUZZER, &tone_is_playing, &tone_timer);
+  manage_arduino_timer_leds_display(stopwatch_settings_state);
 }
 
-#pragma region LocalFunctionsImpls implementações das funções locais
-
-void start_buzzer(volatile bool *tone_is_playing, volatile unsigned long *timer)
+void handle_rotary_encoder_rotation(
+    bool has_rotated_clockwise,
+    StopwatchSettingsSwitch stopwatch_settings_state)
 {
-  tone(BUZZER, 300);
-  *timer = millis();
-  *tone_is_playing = true;
-}
 
-void maybe_stop_buzzer(volatile bool *tone_is_playing,
-                       volatile unsigned long *timer)
-{
-  if (*tone_is_playing && is_debounced(timer, 300))
+  if (has_rotated_clockwise)
   {
-    noTone(BUZZER);
-    *tone_is_playing = false;
-  }
-}
-
-void handle_stopwatch_counter(
-    SimpleTimer *stopwatch,
-    const ArduinoSevenSegmentsDisplayDriver *display_driver)
-{
-  static volatile auto seconds_timer = millis();
-  static volatile auto colon_timer = millis();
-
-  const auto one_second_as_ms = 1000;
-  const auto half_a_second_as_ms = one_second_as_ms / 2;
-
-  if (is_debounced(&colon_timer, half_a_second_as_ms))
-  {
-    display_driver->toggle_colon();
-  }
-
-  if (is_debounced(&seconds_timer, one_second_as_ms))
-  {
-    stopwatch->decrement_seconds();
-    seconds_timer = millis();
-  }
-}
-
-void handle_multiplex_timer_display(
-    SimpleTimer *stopwatch, const ArduinoSevenSegmentsDisplayDriver *driver)
-{
-  const unsigned int multiplex_delay = 5;
-  static volatile auto display_multiplex_timer = millis();
-  static uint8_t digit = 1;
-
-  if (is_debounced(&display_multiplex_timer, multiplex_delay))
-  {
-    // obtém qual a unidade que vai ser acesa (dezena ou unidade de segundos ou
-    // minutos)
-    SimpleTimer::TimeFragment time_fragment;
-    switch (digit)
+    switch (stopwatch_settings_state)
     {
-    case 1:
-      time_fragment = SimpleTimer::TimeFragment::MinutesTen;
+    case StopwatchSettingsSwitch::NONE:
+      stopwatch.increment_seconds();
       break;
-
-    case 2:
-      time_fragment = SimpleTimer::TimeFragment::MinutesUnit;
+    case StopwatchSettingsSwitch::MINUTES:
+      stopwatch.increment_minutes(false);
       break;
-
-    case 3:
-      time_fragment = SimpleTimer::TimeFragment::SecondsTen;
-      break;
-
-    case 4:
-      time_fragment = SimpleTimer::TimeFragment::SecondsUnit;
+    case StopwatchSettingsSwitch::SECONDS:
+      stopwatch.increment_seconds(false);
       break;
     }
-
-    driver->turn_leds_off();
-    stopwatch->display_time_fragment(time_fragment);
-
-    // essa parte controla qual digito vai ser acendido a cada 5ms
-    digit = digit == 4 ? 1 : digit + 1;
-    display_multiplex_timer = millis();
+  }
+  else
+  {
+    switch (stopwatch_settings_state)
+    {
+    case StopwatchSettingsSwitch::NONE:
+      stopwatch.decrement_seconds();
+      break;
+    case StopwatchSettingsSwitch::MINUTES:
+      stopwatch.decrement_minutes(false);
+      break;
+    case StopwatchSettingsSwitch::SECONDS:
+      stopwatch.decrement_seconds(false);
+    }
   }
 }
 
-#pragma endregion LocalFunctionsImpls
+void handle_rotary_encoder_switch_press(
+    bool switch_has_been_pressed, volatile bool *stopwatch_is_running,
+    volatile StopwatchSettingsSwitch *stopwatch_settings_state)
+{
+  static volatile unsigned long rotary_encoder_switch_press_timer = millis();
+  const auto press_time_for_enable_stopwatch_settings = 500;
+
+  // quando pressionar o switch, inicia-se um contador para decidir qual
+  // evento será executado quando o switch termianr de ser pressionado. Fazer
+  // desse jeito evita conflitos de eventos (começar a contar assim que
+  // apertado quando, na verdade, a intenção do usuário era entrar no modo de
+  // configuração)
+  if (switch_has_been_pressed)
+  {
+    rotary_encoder_switch_press_timer = millis();
+  }
+  // se pressionado por 1 segundo, entra (ou altera) no modo de configuração
+  // do cronômetro
+  else if (is_debounced(&rotary_encoder_switch_press_timer,
+                        press_time_for_enable_stopwatch_settings))
+  {
+    // força o cronômetro a parar de rodar, caso o usuário entre no modo de
+    // configuração enquanto ele está rodando
+    *stopwatch_is_running = false;
+
+    switch (*stopwatch_settings_state)
+    {
+    case StopwatchSettingsSwitch::NONE:
+    case StopwatchSettingsSwitch::SECONDS:
+      *stopwatch_settings_state = StopwatchSettingsSwitch::MINUTES;
+      break;
+
+    case StopwatchSettingsSwitch::MINUTES:
+      *stopwatch_settings_state = StopwatchSettingsSwitch::SECONDS;
+      break;
+    }
+  }
+  else
+  {
+    // se o cronômetro estiver em seu estado normal, pressionar o switch deve
+    // iniciar a contagem regressiva
+    if (*stopwatch_settings_state == StopwatchSettingsSwitch::NONE)
+    {
+      *stopwatch_is_running = !(*stopwatch_is_running);
+    }
+    // se o cronômetro estiver em estado de configuração, então pressionar o
+    // switch deve tirá-lo do estado de configuração
+    else
+    {
+      *stopwatch_settings_state = StopwatchSettingsSwitch::NONE;
+    }
+  }
+}
+
+void manage_arduino_timer_leds_display(
+    StopwatchSettingsSwitch stopwatch_settings_state)
+{
+  // todos os tempos se dão em milisegundos
+  const auto blink_duration = 200;
+  const unsigned int multiplex_delay = 5;
+
+  switch (stopwatch_settings_state)
+  {
+  case StopwatchSettingsSwitch::NONE:
+    tarefa3::display_every_digit(&stopwatch, &arduino_display_driver,
+                                 multiplex_delay);
+    break;
+
+  case StopwatchSettingsSwitch::MINUTES:
+    // mantém os dígitos dos minutos piscando
+    tarefa3::partially_blink_half_digits(
+        &stopwatch, &arduino_display_driver, blink_duration, multiplex_delay,
+        SimpleTimer::TimeFragment::SecondsTen,
+        SimpleTimer::TimeFragment::SecondsUnit);
+    break;
+
+  case StopwatchSettingsSwitch::SECONDS:
+    // mantém os dígitos dos minutos segundos
+    tarefa3::partially_blink_half_digits(
+        &stopwatch, &arduino_display_driver, blink_duration, multiplex_delay,
+        SimpleTimer::TimeFragment::MinutesTen,
+        SimpleTimer::TimeFragment::MinutesUnit);
+    break;
+  }
+}

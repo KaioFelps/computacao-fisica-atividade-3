@@ -6,6 +6,22 @@ using tarefa3::core::DisplayDigitHelper;
 
 namespace tarefa3::timer
 {
+//////////////////////////////////////////////////////////////////
+// DeltaOptions
+//////////////////////////////////////////////////////////////////
+SimpleTimer::DeltaOptions::DeltaOptions(bool should_bubble_)
+    : should_bubble(should_bubble_)
+{
+}
+
+SimpleTimer::DeltaOptions::DeltaOptions(bool should_bubble_, bool skip_units_)
+    : should_bubble(should_bubble_), skip_units(skip_units_)
+{
+}
+
+//////////////////////////////////////////////////////////////////
+// SimpleTimer
+//////////////////////////////////////////////////////////////////
 SimpleTimer::SimpleTimer(const display::DisplayDriver *driver_)
     : driver(driver_)
 {
@@ -45,8 +61,8 @@ void SimpleTimer::set_seconds_unit(DisplayDigit digit)
   this->seconds_unit = digit;
 }
 
-void SimpleTimer::increment_seconds() { this->increment_seconds(true); }
-void SimpleTimer::increment_seconds(bool should_bubble)
+void SimpleTimer::increment_seconds() { this->increment_seconds({}); }
+void SimpleTimer::increment_seconds(DeltaOptions options)
 {
   auto seconds_unit_as_int = DisplayDigitHelper::to_uint8(this->seconds_unit);
   auto will_overflow = seconds_unit_as_int == 9;
@@ -70,11 +86,11 @@ void SimpleTimer::increment_seconds(bool should_bubble)
   }
 
   this->set_seconds_ten(DisplayDigit::ZERO);
-  if (should_bubble) this->increment_minutes();
+  if (options.should_bubble) this->increment_minutes();
 }
 
-void SimpleTimer::increment_minutes() { this->increment_minutes(true); }
-void SimpleTimer::increment_minutes(bool should_bubble)
+void SimpleTimer::increment_minutes() { this->increment_minutes({}); }
+void SimpleTimer::increment_minutes(DeltaOptions options)
 {
   auto minutes_unit_as_int = DisplayDigitHelper::to_uint8(this->minutes_unit);
   auto will_overflow = minutes_unit_as_int == 9;
@@ -97,11 +113,11 @@ void SimpleTimer::increment_minutes(bool should_bubble)
   }
 
   // manda de 59:59 -> 0
-  this->reset(true, should_bubble);
+  this->reset(true, options.should_bubble);
 }
 
-void SimpleTimer::decrement_minutes() { this->decrement_minutes(true); }
-void SimpleTimer::decrement_minutes(bool should_bubble)
+void SimpleTimer::decrement_minutes() { this->decrement_minutes({}); }
+void SimpleTimer::decrement_minutes(DeltaOptions options)
 {
   auto minutes_unit_as_int = DisplayDigitHelper::to_uint8(this->minutes_unit);
   auto will_underflow = minutes_unit_as_int == 0;
@@ -125,11 +141,11 @@ void SimpleTimer::decrement_minutes(bool should_bubble)
   // se chegou em 00m00,
   // manda pra 59m59
   // só altera os segundos se `should_bubble` for `true`
-  this->maximize(true, should_bubble);
+  this->maximize(true, options.should_bubble);
 }
 
-void SimpleTimer::decrement_seconds() { this->decrement_seconds(true); }
-void SimpleTimer::decrement_seconds(bool should_bubble)
+void SimpleTimer::decrement_seconds() { this->decrement_seconds({}); }
+void SimpleTimer::decrement_seconds(DeltaOptions options)
 {
   auto unit_as_int = DisplayDigitHelper::to_uint8(this->seconds_unit);
   auto will_underflow = unit_as_int == 0;
@@ -152,7 +168,7 @@ void SimpleTimer::decrement_seconds(bool should_bubble)
   // se chegou em 00s, manda pra (m -1):59
   this->set_seconds_ten(DisplayDigit::FIVE);
   this->set_seconds_unit(DisplayDigit::NINE);
-  if (should_bubble) this->decrement_minutes();
+  if (options.should_bubble) this->decrement_minutes();
 }
 
 void SimpleTimer::reset(bool minutes, bool seconds)

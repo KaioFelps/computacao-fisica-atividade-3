@@ -18,6 +18,27 @@ public:
     SecondsUnit
   };
 
+  /// @brief  Opções para controlar o incremento/decremento dos minutos e
+  /// segundos do timer
+  class DeltaOptions
+  {
+  public:
+    DeltaOptions() = default;
+    DeltaOptions(bool should_bubble);
+    DeltaOptions(bool should_bubble, bool skip_units);
+
+    /// @brief Se a alteração deveria ou não ser propagada para a outra unidade
+    /// de tempo (minutos -> segundos ou segundos -> minutos).
+    ///
+    /// Se `false`, alterações nos segundos não afetam os minutos e vice-versa.
+    /// Por exemplo: o cronômetro iria de 00:00 para 00:59 ao invés de 59:59.
+    bool should_bubble = true;
+    /// @brief Se o incremento deveria desconsiderar as unidades e alterar as
+    /// dezenas diretamente. Por exemplo: se `false`, um exemplo de incrementos
+    /// de segundos seria 00:13 → 00:14; se `true`, seria 00:13 → 00:20.
+    bool skip_units = false;
+  };
+
   SimpleTimer(const display::DisplayDriver *driver);
 
   core::DisplayDigit get_minutes_ten() const;
@@ -34,29 +55,17 @@ public:
 
   void display_time_fragment(TimeFragment fragment);
 
-  /// @brief Incrementa os segundos em 1 segundo
   void increment_seconds();
-  /// @brief Incrementa os segundos em 1 segundo
-  /// @param should_bubble indica se o incremento deveria afetar os minutos
-  void increment_seconds(bool should_bubble);
+  void increment_seconds(DeltaOptions options);
 
-  /// @brief Incrementa os minutos em 1 minuto
   void increment_minutes();
-  /// @brief Incrementa os minutos em 1 minuto
-  /// @param should_bubble Indica se o incremento deveria afetar os segundos
-  void increment_minutes(bool should_bubble);
+  void increment_minutes(DeltaOptions options);
 
-  /// @brief Decrementa os segundos em 1 segundo
   void decrement_seconds();
-  /// @brief Decrementa os segundos em 1 segundo
-  /// @param should_bubble Indica se o decremento deveria afetar os minutos
-  void decrement_seconds(bool should_bubble);
+  void decrement_seconds(DeltaOptions options);
 
-  /// @brief Decrementa os minutos em 1 minuto
   void decrement_minutes();
-  /// @brief Decrementa os minutos em 1 minuto
-  /// @param should_bubble Indica se o decremento deveria afetar os segundos
-  void decrement_minutes(bool should_bubble);
+  void decrement_minutes(DeltaOptions options);
 
   void reset(bool minutes, bool seconds);
   void maximize(bool minutes, bool seconds);

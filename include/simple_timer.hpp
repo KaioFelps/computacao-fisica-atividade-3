@@ -28,14 +28,16 @@ public:
     DeltaOptions(bool should_bubble, bool skip_units);
 
     /// @brief Se a alteração deveria ou não ser propagada para a outra unidade
-    /// de tempo (minutos -> segundos ou segundos -> minutos).
+    /// de tempo (segundos -> minutos). Mudanças nos minutos nunca afetam os
+    /// segundos.
     ///
-    /// Se `false`, alterações nos segundos não afetam os minutos e vice-versa.
+    /// Se `false`, alterações nos segundos não afetam os minutos.
     /// Por exemplo: o cronômetro iria de 00:00 para 00:59 ao invés de 59:59.
     bool should_bubble = true;
     /// @brief Se o incremento deveria desconsiderar as unidades e alterar as
     /// dezenas diretamente. Por exemplo: se `false`, um exemplo de incrementos
-    /// de segundos seria 00:13 → 00:14; se `true`, seria 00:13 → 00:20.
+    /// de segundos seria 00:13 → 00:14; se `true`, seria 00:13 → 00:19 → 00:29
+    /// → ...
     bool skip_units = false;
   };
 
@@ -79,6 +81,18 @@ private:
   core::DisplayDigit minutes_unit = core::DisplayDigit::ZERO;
   core::DisplayDigit seconds_ten = core::DisplayDigit::ZERO;
   core::DisplayDigit seconds_unit = core::DisplayDigit::ZERO;
+
+  void increment_minutes_by_ten();
+  void decrement_minutes_by_ten();
+
+  void increment_seconds_by_ten(bool should_bubble);
+  void decrement_seconds_by_ten(bool should_bubble);
+
+  void increment_minutes_by_unit();
+  void decrement_minutes_by_unit();
+
+  void increment_seconds_by_unit(bool should_bubble);
+  void decrement_seconds_by_unit(bool should_bubble);
 
   SimpleTimer() = default;
 };
